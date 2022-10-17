@@ -1,18 +1,20 @@
 from abc import ABC, abstractmethod
 
+from requests import Response
 from requests_toolbelt.utils import dump
 
 
 class BaseResponse(ABC):
     """
-    Clase que nos ayuda a devolver los datos de una manera concreta y a controlar mejor los errores.
-    Hay que implementar el metodo: _has_error(). ver doc del metodo
+    Base response class for managing the data structure and errors.
 
-    Ejemplo de uso:
+    Neccesary to implement has_error so it can be used
+
+    Use case:
     response = requests_retry_session().post(url=query_url, data=data, headers=headers)
     soc_response = SocResponse(response)()
     if soc_response.error:
-        raise SandasDbApiException(soc_response.error_msg)
+        raise ApiException(soc_response.error_msg)
 
     size = soc_response.data['pagination']['size']
     """
@@ -27,7 +29,6 @@ class BaseResponse(ABC):
         self.data = None
 
     def __call__(self, *args, **kwargs):
-        # LOGGER.debug(self.str_req_resp())  si hay ficheros da error.
         self._has_error()
         return self
 
@@ -37,15 +38,9 @@ class BaseResponse(ABC):
         else:
             return self.response.__repr__()
 
-    def __str__(self):
-        if self.error:
-            return self.error_msg
-        else:
-            return self.response.__repr__()
-
     def str_req_resp(self) -> str:
         """
-        @return: la peticion y la respuesta en str.
+        @return: the request and response in text.
         """
         data = dump.dump_all(
             response=self.response,
@@ -58,12 +53,12 @@ class BaseResponse(ABC):
     @abstractmethod
     def _has_error(self):
         """
-        Este metodo tiene que comprobar si la respuesta es correcta o no, carga las variables:
+        This function checks weather the response is an error, it has the following variables:
             self.error = True/False
-            self.error_msg = el mensaje del error
-            self.data = la respuesta, en la forma que se necesita, text, json, dict, str, etc
+            self.error_msg = The error message
+            self.data = The response in an appropiated format: text, json, dict, str, etc
 
-        Ej:
+        Example:
             def _has_error(self):
                 logger.info(self.str_req_resp())
                 try:
@@ -75,7 +70,7 @@ class BaseResponse(ABC):
 
                 if not self.response.content:
                     self.error = True
-                    self.error_msg = 'Respuesta vacia'
+                    self.error_msg = 'Empty response'
                     return
 
                 json_data = self.response.json()
@@ -83,8 +78,8 @@ class BaseResponse(ABC):
                     self.data = json_data
                 else:
                     self.error = True
-                    self.error_msg = 'Respuesta no esperada'
+                    self.error_msg = 'Not expected response'
 
-        @return: nada
+        @return: None
         """
         pass
