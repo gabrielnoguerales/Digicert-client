@@ -1,36 +1,19 @@
-import logging
+from requests_toolbelt import sessions
 
-from src.common.base_classes import BaseResponse
-from requests.exceptions import HTTPError
-
-
-logger = logging.getLogger(__name__)
+from src.common.base_connector_classes import BaseConnectorWithVersion
 
 
-class Response(BaseResponse):
-    def _has_error(self):
-        logger.debug(self.str_req_resp())
-        try:
-            self.response.raise_for_status()
-        except HTTPError as e:
-            self.error = True
-            self.error_msg = str(e)
-            return
+class DigicertConnector(BaseConnectorWithVersion):
+    def __init__(self, host="https://www.digicert.com/services/", version="v2",
+                 session: sessions.BaseUrlSession = None):
+        """
+        Si se pasa la session se usa esa session sino, internamente se crea una
+        Es obligatorio que la session extienda de la clase requests_toolbelt.sessions.BaseUrlSession
 
-        if not self.response.content:
-            self.error = True
-            self.error_msg = "Empty response"
-            return
+        :param host: url del servidor
+        :param session: requests.Session
+        """
+        self.base_uri = '{}/{}/'.format(host, version)
+        super().__init__(version=version, session=session)
+        self.api_key = None
 
-        json_data = self.response.json()
-        if json_data:
-            self.data = json_data
-        else:
-            self.error = True
-            self.error_msg = "Not expected response"
-
-
-class DigicertConnector:
-    # TODO: implement
-    def __init__(self):
-        pass
