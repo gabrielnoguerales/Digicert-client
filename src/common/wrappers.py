@@ -7,7 +7,7 @@ def login_required(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
         if (
-            not self.api_key or not self.baseuri
+            not self.api_key or not self.base_uri
         ):  # If url and api_key has been set return func else return logger error
             raise BadConfiguratedException("Please login first using your api_key. ")
         return func(self, *args, **kwargs)
@@ -18,7 +18,7 @@ def login_required(func):
 def url_required(func):
     @wraps(func)
     def wrapped(self, *args, **kwargs):
-        if not self.baseuri:  # If url has been set return func else return logger error
+        if not self.base_uri:  # If url has been set return func else return logger error
             raise BadConfiguratedException(
                 "Please set the url before making the login request. "
             )

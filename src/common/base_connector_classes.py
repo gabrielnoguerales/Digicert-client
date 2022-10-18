@@ -1,6 +1,6 @@
 import logging
+from abc import ABC
 
-from requests.adapters import HTTPAdapter
 from requests_toolbelt import sessions
 
 from src.common.exceptions import ConnectorException
@@ -9,13 +9,13 @@ from src.common.wrappers import login_required
 from src.response import Response
 
 
-class BaseConnector:
+class BaseConnector(ABC):
     MAX_RETRIES = 3
     SLEEP_TIME = 60  # Seconds to sleep between retries
 
-    def __init__(self, session):
+    def __init__(self, session, host):
         self.logger = logging.getLogger(__name__)
-        self.base_uri = None  # base uri for the connector
+        self.base_uri = host  # base uri for the connector
         self.api_key = None  # API key for the connector
         if session:
             if isinstance(session, sessions.BaseUrlSession):
