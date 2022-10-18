@@ -53,12 +53,14 @@ class DigicertConnector(BaseConnectorWithVersion):
         self.logger.debug('Welcome {}'.format(response.data['rep_name']))
         self.api_key = token
 
-    def get_domain(self, domain_id, url='domain/{}') -> dict:
+    def get_domain(self, domain_id, url='domain/{}', include_validation=False, include_dcv=False) -> dict:
         """
         Given a domin id returns the info of that domain
 
         :param domain_id: Id of the domain to lookup
         :param url: url without base
+        :param include_validation: True to include validation info
+        :param include_dcv: True to include information about the domain renovation
         :return:
         """
-        return self._get(url=url.format(domain_id))
+        return self._get(url=url.format(domain_id),params={'include_validation':include_validation,'include_dcv':include_dcv})
