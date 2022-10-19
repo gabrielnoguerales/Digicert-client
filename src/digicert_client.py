@@ -13,7 +13,7 @@ class DigicertConnector(BaseConnectorWithVersion):
         self.api_key = None
 
     @login_required
-    def _get(self, url, **kwargs) -> dict:
+    def _get(self, url, headers=None, params=None) -> dict:
         """
         Devuelve un get, por si hay algun metodo que no tenemos, podemos usar este
         Inserta automaticamente el api_key en los "params" del GET
@@ -21,12 +21,39 @@ class DigicertConnector(BaseConnectorWithVersion):
         :param url: url sin la base, donde se encuenta la accion
         :return:
         """
-        if not kwargs:
-            kwargs = dict()
-        if "api_key" not in kwargs:
-            kwargs["X-DC-DEVKEY"] = self.api_key
+        if params is None:
+            params = {}
+        if headers is None:
+            headers = {}
+        if "api_key" not in headers:
+            headers["X-DC-DEVKEY"] = self.api_key
 
-        response = self.session.get(url=url, headers=kwargs)
+        response = self.session.get(url=url, params=params, headers=headers)
+        response = Response(response)()
+        if response.error:
+            raise ConnectorException(
+                "Ha habido un problema: {}".format(response.error_msg)
+            )
+
+        return response.data
+
+    @login_required
+    def _post(self, url, params=None, headers=None) -> dict:
+        """
+        Devuelve un post, por si hay algun metodo que no tenemos, podemos usar este
+        Inserta automaticamente el api_key en los "params" del POST
+
+        :param url: url sin la base, donde se encuenta la accion
+        :return:
+        """
+        if headers is None:
+            headers = {}
+        if params is None:
+            params = {}
+        if "api_key" not in headers:
+            headers["X-DC-DEVKEY"] = self.api_key
+
+        response = self.session.post(url=url, headers=headers, params=params)
         response = Response(response)()
         if response.error:
             raise ConnectorException(
@@ -63,4 +90,28 @@ class DigicertConnector(BaseConnectorWithVersion):
         :param include_dcv: True to include information about the domain renovation
         :return:
         """
-        return self._get(url=url.format(domain_id),params={'include_validation':include_validation,'include_dcv':include_dcv})
+        return self._get(url=url.format(domain_id),
+                         params={'include_validation': include_validation, 'include_dcv': include_dcv})
+
+    def list_domains(self, url='domain', filters=None) -> dict:
+        """
+        Given a domin id returns the info of that domain
+        TODO: Add the filters
+        :param filters: Filters for the listing of domains
+        :param url: url without base
+        :return:
+        """
+        if filters is None:
+            filters = {}
+        return self._get(url=url, params=filters)
+
+    def generate_dcv_token(self, domain_id: int, url='domain/{}/dcv/token'):
+        """
+        Generates a new DCV token for a given domain_id
+
+        :param domain_id: Id of the domain to renovate
+        :param url: url without base
+        :return:
+        """
+
+        return self._post(url=url.format(domain_id))
